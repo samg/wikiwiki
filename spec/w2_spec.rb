@@ -1,4 +1,4 @@
-require File.dirname(__FILE__) + '/../w2'
+require File.dirname(__FILE__) + '/../wikiwiki'
 require 'spec'
 require 'rack/test'
 
