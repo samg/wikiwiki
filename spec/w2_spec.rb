@@ -49,6 +49,15 @@ describe W2::Helpers do
         should == 'foo_bar_baz'
     end
   end
+  
+  describe "revision_file_path" do
+    it %q"should convert /foo/bar to './lib/w2/../../wiki/.foo_bar_baz/#{now.to_i}.foo_bar_baz'" do
+      now = Time.now
+      Time.stub!(:now).and_return now
+      helper.revision_file_path('foo bar_baz').
+        should == "./lib/w2/../../wiki/.foo_bar_baz/#{now.to_i}.foo_bar_baz"
+    end
+  end
 
   describe "edit_path" do
     it "should turn '/' => '/edit'" do

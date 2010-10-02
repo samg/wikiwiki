@@ -34,11 +34,19 @@ module W2
     end
 
     def file_path(path)
-      File.dirname(__FILE__) + '/../../wiki/' + path_to_safe_filename(path)
+      File.dirname(__FILE__) + '/../../wiki/' + path_to_safe_filename(show_path(path))
+    end
+
+    def revision_file_path(uri_path)
+      fp = file_path(uri_path)
+      bn = File.basename(fp)
+      fp.sub(bn, ".#{bn}/#{Time.now.to_i}.#{bn}")
     end
 
     def save_file uri_path, wiki_text
-      fp = file_path(show_path(uri_path))
+      fp = file_path(uri_path)
+      FileUtils.mkdir_p(File.dirname(revision_file_path(uri_path)))
+      system('cp', fp, revision_file_path(uri_path))
       File.open(fp, 'w') do |f|
         f.write wiki_text
       end
