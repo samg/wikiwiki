@@ -1,0 +1,15 @@
+!!! 5
+%html{html_attrs('en')}
+%head
+  %title WikiWiki
+  %link(href="/style.css" media="screen" rel="stylesheet" type="text/css")
+  %script(src="/app.js" type="text/javascript")
+
+
+%body
+  #container
+    #header
+    #content
+      = yield
+    #footer
+
