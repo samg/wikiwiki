@@ -1,7 +1,6 @@
 #! /usr/bin/env ruby
 require 'rubygems'
 require 'sinatra'
-
 require 'lib/w2/helpers'
 helpers do
   include W2::Helpers
@@ -15,17 +14,21 @@ get '/app.js' do
   render :text, File.read(File.dirname) + '/public/app.js'
 end
 
+get %r'/*(.*)/edit' do |path|
+  haml :edit, :locals => {:path => path, :text => wiki_text_for(path)}
+end
+
 get %r'/+(.*)' do |path|
-  if text = wiki_text_for(path)
-    haml :show, :locals => {:path => path, :text => text}
+  if File.exist? file_path(path)
+    haml :show, :locals => {:path => path, :text => parsed_wiki_text_for(path)}
   else 
-    haml :edit, :locals => {:path => path, :text => text}
+    haml :edit, :locals => {:path => path, :text => wiki_text_for(path)}
   end
 end
 
 post %r'/+(.*)' do |path|
-  File.open(file_path(path), 'w') do |f|
+  File.open(file_path(show_path(path)), 'w') do |f|
     f.write params['wiki_text']
   end
-  redirect path
+  redirect show_path(path)
 end
