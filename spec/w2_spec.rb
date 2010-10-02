@@ -43,6 +43,11 @@ describe W2::Helpers do
       helper.path_to_safe_filename('///foo//bar////baz//').
         should == '?foo?bar?baz'
     end
+
+    it "should conver spaces to _'s" do
+      helper.path_to_safe_filename('foo bar_baz').
+        should == 'foo_bar_baz'
+    end
   end
 
   describe "edit_path" do

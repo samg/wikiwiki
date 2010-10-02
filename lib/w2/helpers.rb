@@ -12,7 +12,7 @@ module W2
     ###########################
     def path_to_safe_filename(path)
       path = '/' if path == ''
-      normalize_path(path).gsub('/', '?')
+      normalize_path(path).gsub('/', '?').gsub(' ', '_')
     end
 
     def wiki_text_for(path)
