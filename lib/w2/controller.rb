@@ -21,9 +21,7 @@ module W2
     end
 
     post %r'(.*)' do |path|
-      File.open(file_path(show_path(path)), 'w') do |f|
-        f.write params['wiki_text']
-      end
+      save_file path, params['wiki_text']
       redirect show_path(path)
     end
   end

@@ -1,5 +1,6 @@
 require 'open3'
 require 'haml'
+require 'fileutils'
 # WikiWiki
 module W2
   module Helpers
@@ -34,6 +35,13 @@ module W2
 
     def file_path(path)
       File.dirname(__FILE__) + '/../../wiki/' + path_to_safe_filename(path)
+    end
+
+    def save_file uri_path, wiki_text
+      fp = file_path(show_path(uri_path))
+      File.open(fp, 'w') do |f|
+        f.write wiki_text
+      end
     end
 
     # VIEW HELPERS
