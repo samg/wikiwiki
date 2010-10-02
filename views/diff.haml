@@ -1,0 +1,11 @@
+%h1= path_to_title path
+%h2= Time.at(time.to_i)
+%a{:href => show_path(path)} back
+
+- current_index = changes.index(changes.detect{|c| c =~ /#{time}\./ })
+- current = File.read(changes[current_index])
+- if current_index > 0
+  - previous = File.read(changes[current_index - 1])
+- else 
+  - previous = ''
+= Dirb::Diff.new(previous, current).to_s(:html)

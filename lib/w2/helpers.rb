@@ -1,10 +1,14 @@
 require 'open3'
 require 'haml'
 require 'fileutils'
+require 'dirb'
 # WikiWiki
 module W2
   module Helpers
     include Rack::Utils
+    def changes(path)
+      Dir[File.dirname(revision_file_path(path)) + '/*']
+    end
 
     alias_method :h, :escape_html
 
@@ -37,19 +41,20 @@ module W2
       File.dirname(__FILE__) + '/../../wiki/' + path_to_safe_filename(show_path(path))
     end
 
-    def revision_file_path(uri_path)
+    def revision_file_path(uri_path, timestamp = nil)
       fp = file_path(uri_path)
       bn = File.basename(fp)
-      fp.sub(bn, ".#{bn}/#{Time.now.to_i}.#{bn}")
+      timestamp ||= Time.now.to_i
+      fp.sub(bn, ".#{bn}/#{timestamp}.#{bn}")
     end
 
     def save_file uri_path, wiki_text
       fp = file_path(uri_path)
-      FileUtils.mkdir_p(File.dirname(revision_file_path(uri_path)))
-      system('cp', fp, revision_file_path(uri_path))
       File.open(fp, 'w') do |f|
         f.write wiki_text
       end
+      FileUtils.mkdir_p(File.dirname(revision_file_path(uri_path)))
+      system('cp', fp, revision_file_path(uri_path))
     end
 
     # VIEW HELPERS

@@ -1,3 +1,4 @@
 %h1= path_to_title path
 %a{:href => edit_path(path)} [edit]
+%a{:href => normalize_path(show_path(path) + '/changes')} [changes]
 #text= text

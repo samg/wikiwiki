@@ -12,6 +12,14 @@ module W2
       haml :edit, :locals => {:path => path, :text => wiki_text_for(path)}
     end
 
+    get %r'(.*)/changes' do |path|
+      haml :changes, :locals => {:path => path, :changes => changes(path)}
+    end
+
+    get %r'(.*)/(\d{10})' do |path, time|
+      haml :diff, :locals => {:path => path, :time => time, :changes => changes(path)}
+    end
+
     get %r'(.*)' do |path|
       if File.exist? file_path(path)
         haml :show, :locals => {:path => path, :text => parsed_wiki_text_for(path)}
