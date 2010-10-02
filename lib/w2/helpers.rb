@@ -6,7 +6,11 @@ module W2
     include Rack::Utils
 
     alias_method :h, :escape_html
+
+    # FILE SYSTEM HELPERS
+    ###########################
     def path_to_safe_filename(path)
+      path = '/' if path == ''
       normalize_path(path).gsub('/', '?')
     end
 
@@ -32,10 +36,18 @@ module W2
       File.dirname(__FILE__) + '/../../wiki/' + path_to_safe_filename(path)
     end
 
+    # VIEW HELPERS
+    ###########################
+    def path_to_title(path)
+      path.gsub(/^\//, '' ).gsub('_', ' ')
+    end
+
+    # ROUTE HELPERS
+    ###########################
     def show_path path
       parts = path_parts(path)
       parts.pop if parts.last == 'edit'
-      parts.push('/') if %w[/ /edit].member? path
+      parts = ['/'] if %w[/ /edit].member? path
       join_parts(parts)
     end
 

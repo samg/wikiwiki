@@ -11,6 +11,17 @@ describe 'The WikiWiki App' do
     Sinatra::Application
   end
 
+  def redirect_to(expected)
+    simple_matcher "to redirect to #{expected}" do |given|
+      (300..399) === given.status and
+      given.headers['Location'].should == expected
+    end
+  end
+  it "should redirect edit home page to '/'" do
+    post '/edit'
+    last_response.should redirect_to('/')
+  end
+
 end
 
 describe W2::Helpers do
