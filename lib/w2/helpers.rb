@@ -42,6 +42,17 @@ module W2
       path.gsub(/^\//, '' ).gsub('_', ' ')
     end
 
+    def file_name_to_path(fn)
+      fn.gsub('?', '/').strip
+    end
+
+    # hacky js for coloring future links
+    def blue_links
+      `ls #{File.dirname(__FILE__) + '/../../wiki'}`.inject('{') do |memo, fp|
+        memo + %'"#{file_name_to_path(fp)}":true,'
+      end + '}'
+    end
+
     # ROUTE HELPERS
     ###########################
     def show_path path

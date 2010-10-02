@@ -172,3 +172,14 @@ function scaleTextareas() {
 $(document).ready(function(){
   scaleTextareas();
 });
+
+//red links
+$(document).ready(function(){
+  $('a').each(function(){
+    if ( ! $(this).attr('href').match(/edit$/) ){
+      if ( ! blueLinks[$(this).attr('href')] ){
+        $(this).addClass('future');
+      }
+    }
+  });
+});

@@ -8,7 +8,7 @@ module W2
       render :text, File.read(File.dirname) + '/public/app.js'
     end
 
-    get %r'/*(.*)/edit' do |path|
+    get %r'(.*)/edit' do |path|
       haml :edit, :locals => {:path => path, :text => wiki_text_for(path)}
     end
 
