@@ -7,7 +7,7 @@ module W2
   module Helpers
     include Rack::Utils
     def changes(path)
-      Dir[File.dirname(revision_file_path(path)) + '/*']
+      Dir[File.dirname(revision_file_path(path)) + '/*'].reverse
     end
 
     alias_method :h, :escape_html
@@ -60,7 +60,8 @@ module W2
     # VIEW HELPERS
     ###########################
     def path_to_title(path)
-      path.gsub(/^\//, '' ).gsub('_', ' ')
+      path = path.gsub(/^\//, '' ).gsub('_', ' ')
+      path == '' ? 'Home' : path
     end
 
     def file_name_to_path(fn)
@@ -74,22 +75,43 @@ module W2
       end + '}'
     end
 
+    def diff(path, time)
+      changes = changes(path)
+      current_index = changes.index(changes.detect{|c| c =~ /#{time}\./ })
+      current = File.read(changes[current_index])
+      previous_fn = changes[current_index + 1]
+      if previous_fn
+        previous = File.read(previous_fn)
+      else 
+        previous = ''
+      end
+      Dirb::Diff.new(previous, current).to_s(:html)
+    end
+
     # ROUTE HELPERS
     ###########################
     def show_path path
       parts = path_parts(path)
       parts.pop if parts.last == 'edit'
-      parts = ['/'] if %w[/ /edit].member? path
+      parts = ['/'] if %w[/ /edit /changes].member? path
       join_parts(parts)
     end
 
     def edit_path path
-      parts = path_parts(path)
-      parts.push('edit') unless parts.last == 'edit'
-      join_parts(parts)
+      path_for path, 'edit'
+    end
+
+    def changes_path path
+      path_for path, 'changes'
     end
 
     private
+
+    def path_for(path, action)
+      parts = path_parts(path)
+      parts.push(action) unless parts.last == action
+      join_parts(parts)
+    end
 
     def normalize_path(path)
       join_parts(path_parts(path))

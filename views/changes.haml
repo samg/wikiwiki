@@ -1,11 +1,9 @@
-%h1= path_to_title path
-%a{:href => show_path(path)} back
-
 %h2 Changes
 %ul
   - changes.each do |change|
     - time = change.scan(/\d{10}\./).first.to_s.gsub(/\D/, '')
-    %li
-      %a{:href => time}
-        = Time.at(time.to_i)
+    %dl
+      %dt= Time.at(time.to_i).strftime("%B %d at %I:%M %p")
+      %dd= diff(path, time)
+
 
