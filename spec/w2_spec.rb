@@ -49,13 +49,22 @@ describe W2::Helpers do
         should == 'foo_bar_baz'
     end
   end
-  
+
   describe "revision_file_path" do
-    it %q"should convert /foo/bar to './lib/w2/../../wiki/.foo_bar_baz/#{now.to_i}.foo_bar_baz'" do
+    it %q"should convert /foo/bar to './lib/w2/../../wiki/.?foo?bar/#{now.to_i}.?foo?bar'" do
       now = Time.now
       Time.stub!(:now).and_return now
-      helper.revision_file_path('foo bar_baz').
-        should == "./lib/w2/../../wiki/.foo_bar_baz/#{now.to_i}.foo_bar_baz"
+      helper.revision_file_path('/foo/bar').
+        should == "./lib/w2/../../wiki/.?foo?bar/#{now.to_i}.?foo?bar"
+    end
+  end
+
+  describe 'changes_glob' do
+    it "should escape /'s" do
+      now = Time.now
+      Time.stub!(:now).and_return now
+      helper.changes_glob('/foo/bar').
+        should == './lib/w2/../../wiki/.\?foo\?bar/*'
     end
   end
 

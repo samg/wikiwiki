@@ -7,7 +7,11 @@ module W2
   module Helpers
     include Rack::Utils
     def changes(path)
-      Dir[File.dirname(revision_file_path(path)) + '/*'].reverse
+      Dir[changes_glob(path)].reverse
+    end
+
+    def changes_glob(path)
+      File.dirname(revision_file_path(path)).gsub('?', '\?') + '/*'
     end
 
     alias_method :h, :escape_html
