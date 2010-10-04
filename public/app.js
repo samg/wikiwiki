@@ -176,7 +176,7 @@ $(document).ready(function(){
 //red links
 $(document).ready(function(){
   $('a').each(function(){
-    if ( ! $(this).attr('href').match(/edit$/) ){
+    if ( $(this).attr('href') && ! $(this).attr('href').match(/edit$/) ){
       if ( ! blueLinks[$(this).attr('href')] ){
         $(this).addClass('future');
       }
