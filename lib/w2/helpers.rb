@@ -41,8 +41,12 @@ module W2
       end
     end
 
+    def wiki_db_root
+      File.dirname(__FILE__) + "/../../wiki-#{settings.environment}/"
+    end
+
     def file_path(path)
-      File.dirname(__FILE__) + '/../../wiki/' + path_to_safe_filename(show_path(path))
+      wiki_db_root + path_to_safe_filename(show_path(path))
     end
 
     def revision_file_path(uri_path, timestamp = nil)
@@ -53,6 +57,7 @@ module W2
     end
 
     def save_file uri_path, wiki_text
+      FileUtils.mkdir_p(wiki_db_root)
       fp = file_path(uri_path)
       File.open(fp, 'w') do |f|
         f.write wiki_text
@@ -74,7 +79,7 @@ module W2
 
     # hacky js for coloring future links
     def blue_links
-      `ls #{File.dirname(__FILE__) + '/../../wiki'}`.inject('{') do |memo, fp|
+      `ls #{wiki_db_root}`.inject('{') do |memo, fp|
         memo + %'"#{file_name_to_path(fp)}":true,'
       end + '}'
     end

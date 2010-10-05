@@ -1,4 +1,4 @@
-wiki
+wiki-*
 *.swp
 *.o
 Makefile
