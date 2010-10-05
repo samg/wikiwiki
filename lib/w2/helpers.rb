@@ -42,7 +42,7 @@ module W2
     end
 
     def wiki_db_root
-      File.dirname(__FILE__) + "/../../wiki-#{settings.environment}/"
+      File.dirname(__FILE__) + "/../../wiki-#{Sinatra::Application.environment}/"
     end
 
     def file_path(path)

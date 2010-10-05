@@ -51,11 +51,11 @@ describe W2::Helpers do
   end
 
   describe "revision_file_path" do
-    it %q"should convert /foo/bar to './lib/w2/../../wiki/.?foo?bar/#{now.to_i}.?foo?bar'" do
+    it %q"should convert /foo/bar to './lib/w2/../../wiki-test/.?foo?bar/#{now.to_i}.?foo?bar'" do
       now = Time.now
       Time.stub!(:now).and_return now
       helper.revision_file_path('/foo/bar').
-        should == "./lib/w2/../../wiki/.?foo?bar/#{now.to_i}.?foo?bar"
+        should == "./lib/w2/../../wiki-test/.?foo?bar/#{now.to_i}.?foo?bar"
     end
   end
 
@@ -64,7 +64,7 @@ describe W2::Helpers do
       now = Time.now
       Time.stub!(:now).and_return now
       helper.changes_glob('/foo/bar').
-        should == './lib/w2/../../wiki/.\?foo\?bar/*'
+        should == './lib/w2/../../wiki-test/.\?foo\?bar/*'
     end
   end
 
