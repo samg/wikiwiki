@@ -16,5 +16,5 @@ h1{color:#226}
 .diff li.ins{background:#9f9;}
 .diff li.del{background:#fcc;}
 .diff li:hover{background:#ffc}
-.diff del, .diff ins, .diff span{white-space:pre;font-family:courier;}
+.diff del, .diff ins, .diff span{white-space:pre-wrap;font-family:courier;}
 
