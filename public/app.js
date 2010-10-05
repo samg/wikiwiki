@@ -179,6 +179,7 @@ $(document).ready(function(){
     if ( $(this).attr('href') && ! $(this).attr('href').match(/edit$/) ){
       if ( $(this).attr('href').match(/^http:\/\//) ){
         $(this).addClass('external');
+        $(this).attr('target', '_blank');
       } else if ( ! blueLinks[$(this).attr('href')] ){
         $(this).addClass('future');
       }
