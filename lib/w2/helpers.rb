@@ -33,7 +33,7 @@ module W2
     def parsed_wiki_text_for(path)
       text = wiki_text_for(path)
       if text
-        Open3.popen3(File.dirname(__FILE__) + '/../../vendor/parser') do |i,o,e|
+        Open3.popen3(File.dirname(__FILE__) + '/../../ext/yapwtp/parser') do |i,o,e|
           i.write text
           i.close
           t = o.read

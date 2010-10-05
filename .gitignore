@@ -1,2 +1,4 @@
 wiki
 *.swp
+*.o
+Makefile
