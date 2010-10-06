@@ -21,7 +21,6 @@ module W2
     end
 
     get %r'(.*)' do |path|
-      path = '/' if path == ''
       if File.exist? file_path(path)
         haml :show, :locals => {:path => path, :text => parsed_wiki_text_for(path)}
       else 
