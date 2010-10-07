@@ -5,7 +5,7 @@
     - path = safe_filename_to_path(revision_path_to_main_file_path(File.basename(change)))
     %dl
       %dt
-        %a{:href => path}= path.gsub(/^\//, '')
+        %a{:href => path}= path_to_title(path)
         = Time.at(time.to_i).strftime("%B %d at %I:%M %p")
       %dd= diff(change)
 
