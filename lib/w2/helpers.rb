@@ -49,7 +49,7 @@ module W2
       Open3.popen3(File.dirname(__FILE__) + '/../../ext/yapwtp/parser') do |i,o,e|
         i.write text
         i.close
-        o.read
+        [o.read, e.read].join("\n")
       end
     end
 
