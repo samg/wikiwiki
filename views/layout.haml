@@ -13,13 +13,21 @@
     #header
       - if defined? path
       %h1= path_to_title path
+      [
       %a(href="/") home
-      == |
+      ]
+      [
+      %a(href="/recent_changes") recent changes
+      ]
+      [
       %a{:href => show_path('/' + path)} show
-      == |
+      ]
+      [
       %a{:href => edit_path(path)} edit
-      == |
+      ]
+      [
       %a{:href => changes_path(path)} changes
+      ]
     #content
       = yield
     #footer
