@@ -89,7 +89,8 @@ module W2
       system('cp', file_path, rev_path)
 
       # update recent changes
-      File.open( File.join(wiki_db_root, '.recent_changes'), 'a') do |f|
+      File.open( File.expand_path(
+          File.join(wiki_db_root, '.recent_changes')), 'a') do |f|
         f.puts rev_path
       end
     end
