@@ -2,8 +2,11 @@
 %ul
   - changes.each do |change|
     - time = change.scan(/\d{10}\./).first.to_s.gsub(/\D/, '')
+    - path = safe_filename_to_path(revision_path_to_main_file_path(File.basename(change)))
     %dl
-      %dt= Time.at(time.to_i).strftime("%B %d at %I:%M %p")
-      %dd= diff(path, time)
+      %dt
+        %a{:href => path}= path.gsub(/^\//, '')
+        = Time.at(time.to_i).strftime("%B %d at %I:%M %p")
+      %dd= diff(change)
 
 

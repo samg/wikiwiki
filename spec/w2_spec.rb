@@ -93,8 +93,18 @@ describe "WikiWiki" do
       end
     end
 
+    describe "revision_path_to_main_file_path" do
+      it %q"should convert './lib/w2/../../wiki-test/.?foo?bar/#{now.to_i}.?foo?bar' to /foo/bar" do
+        now = Time.now
+        Time.stub!(:now).and_return now
+        helper.revision_path_to_main_file_path(
+          "./lib/w2/../../wiki-test/.?foo?bar/#{now.to_i}.?foo?bar").
+          should == '/foo/bar'
+      end
+    end
+
     describe 'changes_glob' do
-      it "should escape /'s" do
+      it "should escape ?'s" do
         now = Time.now
         Time.stub!(:now).and_return now
         helper.changes_glob('/foo/bar').

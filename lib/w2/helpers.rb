@@ -18,26 +18,38 @@ module W2
 
     # FILE SYSTEM HELPERS
     ###########################
+
+    # URL paths are converted file names.  Slashes are converted to question
+    # marks to avoid directory related issues.
+    # Care must be taken to escape the '?' when globbing for files since '?'
+    # is a single character wildcard in bash.
     def path_to_safe_filename(path)
       path = '/' if path == ''
       normalize_path(path).gsub('/', '?').gsub(' ', '_')
     end
 
+    def safe_filename_to_path(path)
+      path = '?' if path == ''
+      normalize_path(path.gsub('?', '/'))
+    end
+
     def wiki_text_for(path)
       fp = file_path(path)
-      if File.exist?(fp)
-        File.read(fp)
-      end
+      File.read(fp) if File.exist?(fp)
     end
 
     def parsed_wiki_text_for(path)
       text = wiki_text_for(path)
       if text
-        Open3.popen3(File.dirname(__FILE__) + '/../../ext/yapwtp/parser') do |i,o,e|
-          i.write text
-          i.close
-          t = o.read
-        end
+        parse_wiki_text(text)
+      end
+    end
+
+    def parse_wiki_text(text)
+      Open3.popen3(File.dirname(__FILE__) + '/../../ext/yapwtp/parser') do |i,o,e|
+        i.write text
+        i.close
+        o.read
       end
     end
 
@@ -54,6 +66,11 @@ module W2
       bn = File.basename(fp)
       timestamp ||= Time.now.to_i
       fp.sub(bn, ".#{bn}/#{timestamp}.#{bn}")
+    end
+
+    def revision_path_to_main_file_path(path)
+      safe_filename_to_path(File.basename(path)).
+        gsub(/^\d{10}\./, '')
     end
 
     def revision_directory(uri_path)
@@ -77,7 +94,27 @@ module W2
       end
     end
 
-    def save_current_version(
+    def diff(rev_path)
+      uri_path = (
+        safe_filename_to_path(
+          revision_path_to_main_file_path(
+            rev_path
+          )
+        )
+      ).strip
+      changes = changes(uri_path)
+      time = rev_path.scan(/\d{10}\./).first.to_s.gsub(/\D/, '')
+      current_index = changes.index(changes.detect{|c| c =~ /#{time}\./ })
+      current = File.read(changes[current_index])
+      previous_fn = changes[current_index + 1]
+      if previous_fn
+        previous = File.read(previous_fn)
+      else 
+        previous = ''
+      end
+      Dirb::Diff.new(previous, current).to_s(:html)
+    end
+
 
     # VIEW HELPERS
     ###########################
@@ -95,19 +132,6 @@ module W2
       `ls #{wiki_db_root}`.inject('{') do |memo, fp|
         memo + %'"#{file_name_to_path(fp)}":true,'
       end + '}'
-    end
-
-    def diff(path, time)
-      changes = changes(path)
-      current_index = changes.index(changes.detect{|c| c =~ /#{time}\./ })
-      current = File.read(changes[current_index])
-      previous_fn = changes[current_index + 1]
-      if previous_fn
-        previous = File.read(previous_fn)
-      else 
-        previous = ''
-      end
-      Dirb::Diff.new(previous, current).to_s(:html)
     end
 
     # ROUTE HELPERS

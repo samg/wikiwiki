@@ -12,6 +12,15 @@ module W2
       haml :edit, :locals => {:path => path, :text => wiki_text_for(path)}
     end
 
+    get %r'/recent_changes' do
+      haml :changes, :locals => {
+        :path => 'Recent Changes',
+        :changes => 
+          `tail -n 200 #{(File.join(wiki_db_root, '.recent_changes'))}`.
+            split.reverse
+      }
+    end
+
     get %r'(.*)/changes' do |path|
       haml :changes, :locals => {:path => path, :changes => changes(path)}
     end
