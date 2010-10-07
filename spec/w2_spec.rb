@@ -49,6 +49,22 @@ describe "WikiWiki" do
         helper.save_file('/save/a/file', text)
         File.read(helper.file_path('/save/a/file')).should == text
       end
+
+      it "should save revisions" do
+        text = "Some\n==Awesome==\n [[WikiText]]"
+        helper.save_file('/save/a/file', text)
+        Dir.new(helper.revision_directory('/save/a/file')).
+          should have(3).entries # ., .., revisionfile
+      end
+
+      it "should save the revision to recent_changes" do
+        helper.save_file('/save/a/file', "text")
+        File.readlines(helper.wiki_db_root + '.recent_changes').
+          size.should == 1
+        helper.save_file('/save/a/file', "text")
+        File.readlines(helper.wiki_db_root + '.recent_changes').
+          size.should == 2
+      end
     end
 
     describe "path_to_safe_filename" do

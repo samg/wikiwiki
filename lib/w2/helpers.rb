@@ -56,15 +56,28 @@ module W2
       fp.sub(bn, ".#{bn}/#{timestamp}.#{bn}")
     end
 
-    def save_file uri_path, wiki_text
-      FileUtils.mkdir_p(wiki_db_root)
-      fp = file_path(uri_path)
-      File.open(fp, 'w') do |f|
-        f.write wiki_text
-      end
-      FileUtils.mkdir_p(File.dirname(revision_file_path(uri_path)))
-      system('cp', fp, revision_file_path(uri_path))
+    def revision_directory(uri_path)
+      File.dirname(revision_file_path(uri_path))
     end
+
+    def save_file uri_path, wiki_text
+      # save current version
+      FileUtils.mkdir_p( wiki_db_root )
+      file_path = file_path( uri_path )
+      File.open( file_path, 'w' ) { |f| f.write wiki_text }
+
+      # save revsion in history folder
+      rev_path = revision_file_path(uri_path)
+      FileUtils.mkdir_p(File.dirname(rev_path))
+      system('cp', file_path, rev_path)
+
+      # update recent changes
+      File.open( File.join(wiki_db_root, '.recent_changes'), 'a') do |f|
+        f.puts rev_path
+      end
+    end
+
+    def save_current_version(
 
     # VIEW HELPERS
     ###########################
