@@ -7,7 +7,7 @@ module W2
   module Helpers
     include Rack::Utils
     def changes(path)
-      Dir[changes_glob(path)].reverse
+      Dir[changes_glob(path)].sort.reverse
     end
 
     def changes_glob(path)
