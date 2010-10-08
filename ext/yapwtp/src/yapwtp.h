@@ -35,4 +35,11 @@ extern long input_buffer_pos;
 
 extern struct list list;
 
+void init(void);
+void cleanup(void);
+void parse(void);
+void handle_toc(void);
+bstring get_output_buffer();
+char *get_output_buffer_cstr(void);
+bstring get_input_buffer();
 #endif

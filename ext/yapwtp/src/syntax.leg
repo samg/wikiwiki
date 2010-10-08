@@ -1,0 +1,474 @@
+%{
+#include <stdio.h>
+#include <signal.h>
+#include <time.h>
+#include <stdarg.h>
+#include <stdbool.h>
+#include <ctype.h>
+#include "bstrlib.h"
+#include "list.h"
+#include "content.h"
+#include "yapwtp.h"
+#include "io.h"
+
+#define YY_noDEBUG 1
+
+#define IMAGE_FRAME 1
+#define IMAGE_THUMB ( 1 << 1 )
+#define IMAGE_NOLINK ( 1 << 2 )
+#define IMAGE_CUSTOMLINK ( 1 << 3 )
+#define IMAGE_HAS_CAPTION ( 1 << 4 )
+
+#define TOC_NOTOC ( 1 << 1 )
+#define TOC_FORCETOC ( 1 << 2 )
+#define TOC_RELOC ( 1 << 3 )
+
+#define YY_INPUT(buf, result, max_size) handle_input(buf, &result, max_size)
+
+int current_header_level = 0;
+int current_bullet_list_level;
+int current_numbered_list_level;
+
+int start_of_line = 1;
+char protocol[5];
+
+int image_attributes = 0;
+bstring image_url;
+bstring image_variables;
+bstring image_link_url;
+bstring image_caption;
+
+bstring link_path;
+bstring link_text;
+
+int toc_attributes = 0;
+
+int in_tag = 0;
+bstring tag_content;
+unsigned int tag_content_size = 2 * MBYTE;
+
+bstring output_buffer = NULL;
+bstring input_buffer = NULL;
+long input_buffer_pos = 0;
+
+struct list list;
+
+// Render the ToC from a list, output to buffer
+void assemble_toc(struct node *item, bstring toc_buffer) {
+  if(!item) {
+    printf("Bad list passed to assemble_toc\n");
+    return;
+  }
+
+  struct node *next;
+  int previous_level = item->level;
+  int total_layers = 0;
+  int i;
+  bformata(toc_buffer, "%s", "<div id=\"toc\" class=\"toc\">\n<div id=\"toctitle\">Contents</div>\n<ol>\n");
+  while(item != NULL) {
+    next = item->next;
+
+    // Layer the list deeper as necessary
+    if(item->level > previous_level) {
+      repeat_append(toc_buffer, ' ', (total_layers + 1) * 2);
+      for(i = previous_level; i < item->level; i++) {
+        bformata(toc_buffer, "%s", "<ol>\n");
+        total_layers++;
+      }
+    } else if(item->level < previous_level) {
+      for(i = previous_level; i > item->level; i--) {
+        repeat_append(toc_buffer, ' ', (total_layers) * 2);
+        bformata(toc_buffer, "%s", "</ol></li>\n");
+        total_layers--;
+      }
+    }
+
+    // Add the item
+    if(item->name && item->content) {
+      repeat_append(toc_buffer, ' ', (total_layers + 1) * 2);
+      bformata(toc_buffer, "  <li><a href=\"#%s\">%s</a>", bdata(item->name), bdata(item->content));
+      if(next && next->level > item->level) {
+        bcatcstr(toc_buffer, "\n");
+      } else {
+        bcatcstr(toc_buffer, "</li>\n");
+	  }
+    }
+    previous_level = item->level;
+    item = next;
+  }
+
+  // Clean up lists left open
+  while(total_layers > 0) {
+    bformata(toc_buffer, "%s", "</ol>\n");
+    total_layers--;
+  }
+  bformata(toc_buffer, "%s", "</ol>\n</div>\n");
+}
+
+// Insert the ToC into the output buffer in place of the __TOC__ tag
+void insert_reloc_toc(bstring toc_buffer) {
+  bstring find = bfromcstr("__TOC__");
+  if(bfindreplace(output_buffer, find, toc_buffer, 0) == BSTR_ERR) {
+    printf("Error inserting toc_buffer into output_buffer\n");
+  }
+  bdestroy(find);
+}
+
+// Main ToC routine
+void handle_toc(void) {
+  if(toc_attributes & TOC_NOTOC) {
+    return;
+  }
+
+  if((list.size > 3) || (toc_attributes & TOC_FORCETOC)) {
+    bstring toc_buffer = bfromcstr("");
+    assemble_toc(list.head->next, toc_buffer);
+
+    if(toc_attributes & TOC_RELOC) {
+      insert_reloc_toc(toc_buffer);
+      bdestroy(toc_buffer);
+      return;
+    }
+
+    if(binsert(output_buffer, 0, toc_buffer, ' ') != BSTR_OK) {
+      printf("Error prepending toc_buffer to output_buffer\n");
+    }
+    bdestroy(toc_buffer);
+  }
+}
+
+void open_tag(char *tag, char *args) {
+  if(args) {
+    bprintf("<%s %s>", tag, args);
+  } else {
+    bprintf("<%s>", tag);
+  }
+
+  in_tag = 1;
+  if(tag_content) {
+    btrunc(tag_content,0 );
+  }
+}
+
+void close_tag(char *tag) {
+  bprintf("</%s>", tag);
+  in_tag = 0;
+}
+
+void append_to_tag_content(char *fmt, ...) {
+  int ret;
+
+  if(!in_tag) {
+    bvformata(ret, output_buffer, fmt, fmt);
+    return;
+  }
+
+  bvformata(ret, tag_content, fmt, fmt);
+}
+
+%}
+
+# High-level
+page =  nowiki | html | pre_block | wikitext_line | wikitext
+wikitext_line = paragraph | horizontal_line 
+wikitext = table_of_contents | template | heading | indentation | list | formatting | image | link | table | anything_else | eol
+
+# Generally useful rules
+eol = '\r'? '\n' { start_of_line = 1; }
+eof = !.
+space = [\t ]
+
+# Headings
+heading = heading_marker {
+    char tag[4];
+    sprintf(tag, "h%d", current_header_level);
+    open_tag(tag, NULL);
+  } space* heading_text heading_marker space* ( eol | eof ) 
+  {
+    brtrimws(tag_content);
+    bstring tmp = bstrcpy(tag_content);
+    strip_html_markup(tmp);
+    urlencode(tmp);
+    bprintf("<span class=\"editsection\">[<a href=\"edit\">edit</a>]</span><span class=\"mw-headline\" id=\"%s\">", bdata(tmp));
+    bdestroy(tmp);
+
+    bprintf("%s</span>", bdata(tag_content));
+    char tag[4];
+    sprintf(tag, "h%d", current_header_level);
+    close_tag(tag);
+
+    struct node *current = list_get_new_tail(&list);
+
+    tmp = bstrcpy(tag_content);
+    strip_html_markup(tmp);
+    urlencode(tmp);
+    bprintf("<a name=\"%s\"></a>", bdata(tmp));
+    bassign(current->name, tmp);
+
+    bstring human_name = bstrcpy(tag_content);
+    strip_tags(human_name);
+    brtrimws(human_name);
+    bassign(current->content, human_name);
+    current->level = current_header_level;
+
+    bdestroy(tmp);
+    bdestroy(human_name);
+
+    btrunc(tag_content, 0);
+    current_header_level = 0;
+  }
+heading_text = < ( !heading_marker ( formatting | link | anything_else ) )* > 
+heading_marker = < '=' '='+ > { if(current_header_level == 0) current_header_level = (yyleng > 5) ? 5 : yyleng; }
+
+# Paragraph
+paragraph = wikitext eol eol { bprintf("</p><p>"); }
+horizontal_line = "----" ( eol | eof )  { bprintf("<hr/>"); }
+
+# Indentation
+indentation = &{ start_of_line } ':' { bprintf("&nbsp;&nbsp;"); } wikitext
+
+# Lists
+list = bullet_list | numbered_list
+
+# Bullet list
+bullet_list = { bprintf("<ul>"); } bullet_list_entry+ { 
+  while((current_bullet_list_level > 0) && current_bullet_list_level--) { 
+    bprintf("</ul>"); 
+  }
+}
+bullet_list_entry = bullet space* ( !eol wikitext )* ( eol | eof ) { bprintf("</li>"); }
+bullet = < '*'+ > {
+  while((current_bullet_list_level < yyleng) && current_bullet_list_level++) { 
+      bprintf("<ul>"); 
+  }
+  while((current_bullet_list_level > yyleng) && current_bullet_list_level--) { 
+      bprintf("</ul>"); 
+  }
+  current_bullet_list_level = yyleng;
+  bprintf("<li>"); 
+  start_of_line = 0;
+}
+
+# Numbered list
+numbered_list = { bprintf("<ol>"); } numbered_list_entry+ { while(current_numbered_list_level--) { bprintf("</ol>"); } }
+numbered_list_entry = numbered space* ( !eol wikitext )* eol? { bprintf("</li>"); }
+numbered = < '#'+ > {
+  while((current_numbered_list_level < yyleng) && current_numbered_list_level++) { 
+      bprintf("<ol>"); 
+  }
+  while((current_numbered_list_level > yyleng) && current_numbered_list_level--) { 
+      bprintf("</ol>"); 
+  }
+  current_numbered_list_level = yyleng;
+  bprintf("<li>"); 
+  start_of_line = 0;
+}
+
+# Formatting
+formatting = bold_italic | bold | italic
+bold_italic = "'''''" { append_to_tag_content("<b><i>"); }( !"'''''" wikitext )* "'''''" { append_to_tag_content("</i></b>"); }
+bold = "'''" { append_to_tag_content("<b>"); }( !"'''" wikitext )* "'''" { append_to_tag_content("</b>"); }
+italic = "''" { append_to_tag_content("<i>"); }( !"''" wikitext )* "''" { append_to_tag_content("</i>"); }
+
+# pre-formatted blocks
+pre_block = &{ start_of_line } { bprintf("<pre>"); } pre_line+ { bprintf("</pre>"); }
+pre_line = ' ' < ( !eol . )* ( eol | eof ) > { bprintf("%s", yytext); }
+nowiki = '<nowiki>' ( !'</nowiki>' anything_else )* '</nowiki>'
+
+# Links
+link = ( local_link | external_link ) { start_of_line = 0; }
+local_link = link_open ':'? namespace? link_path rename? link_close blend {
+  strip_html_markup(link_path);
+  urlencode(link_path);
+  remove_parentheticals(link_text);
+  btrimws(link_text);
+  append_to_tag_content("<a href=\"/%s\">%s</a>", bdata(link_path), bdata(link_text));
+  btrunc(link_path, 0);
+  btrunc(link_text, 0);
+  }
+namespace = < ( !':' !link_close . )* > ':' { bformata(link_path, "%s:", yytext); }
+link_path = < ( !link_close !'|' . )* > { bcatcstr(link_path, yytext); bcatcstr(link_text, yytext); }
+rename = '|' < ( !link_close . )* > { btrunc(link_text, 0); bcatcstr(link_text, yytext); }
+blend = < ( !space !( '=' '='+ ) !'[' !eol !eof . )* > { bcatcstr(link_text, yytext); }
+
+external_link = named_link | unnamed_link | url
+named_link = '[' !'javascript:' { append_to_tag_content("<a href=\""); } link_url { append_to_tag_content("\">");} ' '+ link_name + space* ']' {append_to_tag_content("</a>"); }
+link_url = < ( !' ' !']' . )+ >  { append_to_tag_content(yytext); }
+link_name = < ( !']' . )+ > { append_to_tag_content(yytext); }
+unnamed_link = '[' !'javascript:' < ( !']' . )* > ']' { append_to_tag_content("<a href=\"%s\">%s</a>", yytext, yytext);}
+url = < ( 'http' | 'https' | 'ftp' ) > { strcpy(protocol, yytext); } '://' < ( !eol !' ' . )* > { append_to_tag_content("<a href=\"%s://%s\">%s://%s</a>", protocol, yytext, protocol, yytext); }
+link_open = '[['
+link_close = ']]'
+
+# Images
+image = open_image { btrunc(image_variables, 0); } file_indicator arguments? image_caption? close_image {
+  if(image_attributes & IMAGE_FRAME) {
+    bprintf("<div class=\"thumb tright\"><div class=\"thumbinner\">");
+  }
+
+  if(!(image_attributes & IMAGE_NOLINK)) {
+    if(image_attributes & IMAGE_CUSTOMLINK)
+      bprintf("<a href=\"%s\" class=\"image\">", bdata(image_link_url));
+    else
+      if(image_attributes & IMAGE_HAS_CAPTION)
+        bprintf("<a href=\"File:%s\" class=\"image\" title=\"%s\">", bdata(image_url), bdata(image_caption));
+      else
+        bprintf("<a href=\"File:%s\" class=\"image\">", bdata(image_url));
+  }
+
+  if(image_attributes & IMAGE_THUMB) {
+    bprintf("<img src=\"%s\" width=\"220\" height=\"30\" class=\"thumbimage\"/>", bdata(image_url));
+  } else if(image_attributes & IMAGE_FRAME) {
+    bprintf("<img src=\"%s\" class=\"thumbimage\"/>", bdata(image_url));
+  } else {
+    bprintf("<img src=\"%s\" %s/>", bdata(image_url), bdata(image_variables));
+  }
+  if(!(image_attributes & IMAGE_NOLINK)) {
+    bprintf("</a>");
+  }
+
+  if(image_attributes & IMAGE_FRAME) {
+    bprintf("<div class=\"thumbcaption\">%s</div></div>", bdata(image_caption));
+  }
+}
+open_image = '[[' space*
+close_image = space* ']]'
+file_indicator = ( 'File:' | 'Image:' ) < ( !'|' !close_image . )* > { bassignformat(image_url, "%s", yytext); }
+arguments = '|' ( special_image_variables | generic_variable value ) arguments?
+special_image_variables = image_type | float | image_link
+image_type = frame | thumb
+frame = 'frame' { image_attributes |= IMAGE_FRAME; }
+thumb = ( 'thumbnail' | 'thumb' ) { image_attributes |= IMAGE_THUMB; }
+float = < ( 'left' | 'right' | 'center' ) > { 
+  bformata(image_variables, " class=\"float%s\"", yytext);
+} | 'none'
+image_link = 'link=' < ( !'|' !close_image . )* > {
+  if(strcmp(yytext, "") == 0) {
+    image_attributes |= IMAGE_NOLINK;
+  } else {
+    image_attributes |= IMAGE_CUSTOMLINK;
+    bassignformat(image_link_url, "%s", yytext);
+  }
+}
+generic_variable = < ( !'|' !'=' !close_image . )* > { 
+  bformata(image_variables, "%s", yytext);
+}
+value = '=' < ( !'|' !close_image . )* > {
+  bformata(image_variables, "=\"%s\"", yytext);
+}
+image_caption = '|' < ( !close_image . )+ > {
+  image_attributes |= IMAGE_HAS_CAPTION;
+  bassignformat(image_caption, "%s", yytext);
+}
+
+# Tables
+table = '{|' 
+  { bprintf("<table>"); }
+  eol table_body '|}' ( eol | eof )
+  { bprintf("</table>"); }
+table_body = table_caption? table_header? table_row+
+table_caption = '|+' ' '+ < ( !eol . )* > eol { bprintf("<caption>%s</caption>", yytext); }
+table_row = '|-'
+  { bprintf("<tr>"); }
+  space* eol table_heading* table_cell*
+  { bprintf("</tr>"); }
+table_cell = '|'?
+  { bprintf("<td>"); }
+  ' '+ < ( !'||' !eol . )* > ( eol | '||' )
+  { bprintf("%s</td>", yytext); }
+table_header = { bprintf("<tr>"); } table_heading+ { bprintf("</tr>"); }
+table_heading = { bprintf("<th"); }'!' ' '+ < ( !' |' . )* > { bprintf(" %s>", yytext); } ' |' space* < ( !eol . )* > eol {bprintf("%s</th>", yytext); }
+
+# Templates
+template = '{{' space* ( !'}}' . )* '}}' { start_of_line = 0; }
+
+# Table of Contents
+table_of_contents = ( notoc | toc | forcetoc )
+notoc = '__NOTOC__' { toc_attributes |= TOC_NOTOC; }
+forcetoc = '__FORCETOC__' { toc_attributes |= TOC_FORCETOC; }
+toc = '__TOC__' { toc_attributes |= TOC_RELOC; bprintf("__TOC__"); // pass-through for later replacement }
+
+# HTML markup
+html = '<' < '/'? ( !'>' . )+ > '/'? '>' { 
+  if(valid_html_tag(yytext, yyleng)) { 
+    bstring b = bfromcstr(yytext);
+    btolower(b);
+    bprintf("<%s>", bdata(b));
+    bdestroy(b);
+  } else {
+    bprintf("&lt;%s&gt;", yytext); 
+  }
+  start_of_line = 0;
+}
+
+# Other shit
+anything_else = < !eol . > { start_of_line = 0; append_to_tag_content(yytext); }
+
+
+%%
+
+bstring get_input_buffer(void) {
+  return input_buffer;
+}
+
+bstring get_output_buffer(void) {
+  return output_buffer;
+}
+
+char *get_output_buffer_cstr(void) {
+  return bdata(output_buffer);
+}
+
+void init(void) {
+  current_header_level = 0;
+  start_of_line = 1;
+  image_attributes = 0;
+  toc_attributes = 0;
+  in_tag = 0;
+  input_buffer_pos = 0;
+
+  list_init(&list);
+  tag_content = bfromcstr("");
+  balloc(tag_content, tag_content_size);
+
+  image_variables = bfromcstr("");
+  image_url = bfromcstr("");
+  image_link_url = bfromcstr("");
+  image_caption = bfromcstr("");
+
+  link_path = bfromcstr("");
+  link_text = bfromcstr("");
+
+  output_buffer = bfromcstr("");
+  input_buffer = bfromcstr("");
+  balloc(output_buffer, 1 * MBYTE);
+}
+
+void cleanup(void) {
+  bdestroy(tag_content);
+  bdestroy(image_variables);
+  bdestroy(image_url);
+  bdestroy(image_link_url);
+  bdestroy(image_caption);
+  bdestroy(link_path);
+  bdestroy(link_text);
+  bdestroy(output_buffer);
+  bdestroy(input_buffer);
+
+  list_free(&list);
+
+  // Clean up after leg...
+  free(yybuf);
+  free(yytext);
+  free(yythunks);
+  free(yyvals);
+  yybuflen = 0;
+}
+
+void parse() {
+  bprintf("<p>");
+  while(yyparse()) {}
+  bprintf("</p>");
+  handle_toc();
+}
+

@@ -14,7 +14,7 @@
 #include "bstrlib.h"
 #include "list.h"
 #include "content.h"
-#include "common.h"
+#include "yapwtp.h"
 #include "io.h"
 
 #define YY_noDEBUG 1
@@ -81,10 +81,10 @@ void assemble_toc(struct node *item, bstring toc_buffer) {
         bformata(toc_buffer, "%s", "<ol>\n");
         total_layers++;
       }
-    } else if((item->level < previous_level) && (total_layers > 1)) {
+    } else if(item->level < previous_level) {
       for(i = previous_level; i > item->level; i--) {
         repeat_append(toc_buffer, ' ', (total_layers) * 2);
-        bformata(toc_buffer, "%s", "</ol>\n");
+        bformata(toc_buffer, "%s", "</ol></li>\n");
         total_layers--;
       }
     }
@@ -92,7 +92,12 @@ void assemble_toc(struct node *item, bstring toc_buffer) {
     // Add the item
     if(item->name && item->content) {
       repeat_append(toc_buffer, ' ', (total_layers + 1) * 2);
-      bformata(toc_buffer, "  <li><a href=\"#%s\">%s</a></li>\n", bdata(item->name), bdata(item->content));
+      bformata(toc_buffer, "  <li><a href=\"#%s\">%s</a>", bdata(item->name), bdata(item->content));
+      if(next && next->level > item->level) {
+        bcatcstr(toc_buffer, "\n");
+      } else {
+        bcatcstr(toc_buffer, "</li>\n");
+	  }
     }
     previous_level = item->level;
     item = next;
@@ -116,7 +121,7 @@ void insert_reloc_toc(bstring toc_buffer) {
 }
 
 // Main ToC routine
-void handle_toc() {
+void handle_toc(void) {
   if(toc_attributes & TOC_NOTOC) {
     return;
   }
@@ -690,7 +695,7 @@ YY_ACTION(void) yy_1_blend(char *yytext, int yyleng)
 YY_ACTION(void) yy_1_rename(char *yytext, int yyleng)
 {
   yyprintf((stderr, "do yy_1_rename\n"));
-   btrunc(link_text, 0); bcatcstr(link_text,yytext); ;
+   btrunc(link_text, 0); bcatcstr(link_text, yytext); ;
 }
 YY_ACTION(void) yy_1_link_path(char *yytext, int yyleng)
 {
@@ -700,7 +705,7 @@ YY_ACTION(void) yy_1_link_path(char *yytext, int yyleng)
 YY_ACTION(void) yy_1_namespace(char *yytext, int yyleng)
 {
   yyprintf((stderr, "do yy_1_namespace\n"));
-   bcatcstr(link_path, yytext); bconchar(link_path, ':'); ;
+   bformata(link_path, "%s:", yytext); ;
 }
 YY_ACTION(void) yy_1_local_link(char *yytext, int yyleng)
 {
@@ -769,14 +774,15 @@ YY_ACTION(void) yy_1_numbered(char *yytext, int yyleng)
 {
   yyprintf((stderr, "do yy_1_numbered\n"));
   
-  start_of_line = 0;
-  if(current_numbered_list_level < yyleng && current_numbered_list_level != 0) {
-    bprintf("<ol>");
-  } else if(current_numbered_list_level > yyleng) {
-    bprintf("</ol>");
+  while((current_numbered_list_level < yyleng) && current_numbered_list_level++) { 
+      bprintf("<ol>"); 
   }
-  current_numbered_list_level = yyleng; 
+  while((current_numbered_list_level > yyleng) && current_numbered_list_level--) { 
+      bprintf("</ol>"); 
+  }
+  current_numbered_list_level = yyleng;
   bprintf("<li>"); 
+  start_of_line = 0;
 ;
 }
 YY_ACTION(void) yy_1_numbered_list_entry(char *yytext, int yyleng)
@@ -798,14 +804,15 @@ YY_ACTION(void) yy_1_bullet(char *yytext, int yyleng)
 {
   yyprintf((stderr, "do yy_1_bullet\n"));
   
-  start_of_line = 0;
-  if(current_bullet_list_level < yyleng && current_bullet_list_level != 0) {
-    bprintf("<ul>");
-  } else if(current_bullet_list_level > yyleng) {
-    bprintf("</ul>");
+  while((current_bullet_list_level < yyleng) && current_bullet_list_level++) { 
+      bprintf("<ul>"); 
   }
-  current_bullet_list_level = yyleng; 
+  while((current_bullet_list_level > yyleng) && current_bullet_list_level--) { 
+      bprintf("</ul>"); 
+  }
+  current_bullet_list_level = yyleng;
   bprintf("<li>"); 
+  start_of_line = 0;
 ;
 }
 YY_ACTION(void) yy_1_bullet_list_entry(char *yytext, int yyleng)
@@ -2087,27 +2094,29 @@ YY_PARSE(int) YYPARSE(void)
 #endif
 
 
-void set_output_buffer(bstring buffer) {
-  output_buffer = buffer;
+bstring get_input_buffer(void) {
+  return input_buffer;
 }
 
-void set_input_buffer(bstring buffer) {
-  input_buffer = buffer;
+bstring get_output_buffer(void) {
+  return output_buffer;
 }
 
-void init() {
+char *get_output_buffer_cstr(void) {
+  return bdata(output_buffer);
+}
+
+void init(void) {
   current_header_level = 0;
   start_of_line = 1;
   image_attributes = 0;
   toc_attributes = 0;
   in_tag = 0;
-  bstring output_buffer = NULL;
-  bstring input_buffer = NULL;
   input_buffer_pos = 0;
 
   list_init(&list);
   tag_content = bfromcstr("");
-  ballocmin(tag_content, tag_content_size);
+  balloc(tag_content, tag_content_size);
 
   image_variables = bfromcstr("");
   image_url = bfromcstr("");
@@ -2119,10 +2128,10 @@ void init() {
 
   output_buffer = bfromcstr("");
   input_buffer = bfromcstr("");
-  ballocmin(output_buffer, 1 * MBYTE);
+  balloc(output_buffer, 1 * MBYTE);
 }
 
-void cleanup() {
+void cleanup(void) {
   bdestroy(tag_content);
   bdestroy(image_variables);
   bdestroy(image_url);
@@ -2130,31 +2139,24 @@ void cleanup() {
   bdestroy(image_caption);
   bdestroy(link_path);
   bdestroy(link_text);
+  bdestroy(output_buffer);
+  bdestroy(input_buffer);
 
   list_free(&list);
+
+  // Clean up after leg...
+  free(yybuf);
+  free(yytext);
+  free(yythunks);
+  free(yyvals);
+  yybuflen = 0;
 }
 
-void parse(bstring inputbuffer, bstring outbuffer) {
-  init();
-  set_output_buffer(outbuffer);
-  set_input_buffer(inputbuffer);
-
+void parse() {
   bprintf("<p>");
   while(yyparse()) {}
   bprintf("</p>");
   handle_toc();
-
-  cleanup();
 }
 
-int main() {
-  bstring output = bfromcstr("");
-  bstring input = bfromcstr("");
-  //file_get_contents(input, "spec/fixtures/cnn.com");
-  stdin_get_contents(input);
-  parse(input, output);
-  printf("%s", bdata(output));
-  bdestroy(output);
-  return 0;
-}
 

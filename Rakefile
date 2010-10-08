@@ -12,7 +12,8 @@ namespace :parser do
   desc "update the source code of the yapwtp parser"
   task :update => :record_version do
     `bash -c 'rm -rf #{root}/ext/yapwtp/*.{c,h,o}'`
-    `bash -c 'cp -v #{root}/../YAPWTP/src/*.{c,h} #{root}/ext/yapwtp/'`
+    `bash -c 'cp -v #{root}/../YAPWTP/src/*.{c,h} #{root}/ext/yapwtp/src/'`
+    `bash -c 'cp -v #{root}/../YAPWTP/Makefile #{root}/ext/yapwtp/'`
   end
 
   task :record_version do

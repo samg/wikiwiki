@@ -1,7 +1,7 @@
 #include <ctype.h>
 #include <stdarg.h>
 #include <stdio.h>
-#include "common.h"
+#include "yapwtp.h"
 #include "io.h"
 #include "bstrlib.h"
 
@@ -43,11 +43,16 @@ void stdin_get_contents(bstring buffer) {
   buffer->slen = 0;
   while(EOF != (c = getchar())) {
     if(buffer->slen == buffer->mlen) {
-      ballocmin(buffer, buffer->mlen * 2); // Just double the buffer
+      balloc(buffer, buffer->mlen * 2); // Just double the buffer
 	  buffer->mlen = buffer->mlen * 2;
 	}
     buffer->data[buffer->slen] = c;
 	buffer->slen++;
   }
   buffer->slen--; // Move the pointer back on the very last pass
+}
+
+// Fill the input buffer from a standard C string
+void str_get_contents(const char *str) {
+  bcatcstr(input_buffer, str);
 }
