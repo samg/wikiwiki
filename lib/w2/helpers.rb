@@ -2,6 +2,7 @@ require 'open3'
 require 'haml'
 require 'fileutils'
 require 'dirb'
+require File.dirname(__FILE__) + '/../../vendor/YAPWTP/ffi/yapwtp'
 # WikiWiki
 module W2
   module Helpers
@@ -46,11 +47,8 @@ module W2
     end
 
     def parse_wiki_text(text)
-      Open3.popen3(File.dirname(__FILE__) + '/../../vendor/YAPWTP/bin/parser') do |i,o,e|
-        i.write text
-        i.close
-        [o.read, e.read].join("\n")
-      end
+      parser = WikiParser.new
+      parser.html_from_string(text)
     end
 
     def wiki_db_root
