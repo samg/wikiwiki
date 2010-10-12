@@ -4,3 +4,4 @@ git submodule init
 (cd vendor/peg-0.1.4 && make)
 (export PATH="../peg-0.1.4:$PATH"; cd vendor/YAPWTP && make)
 git submodule status > vendor/yapwtp-version.txt
+echo "Last Updated $(date)" >> vendor/yapwtp-version.txt
