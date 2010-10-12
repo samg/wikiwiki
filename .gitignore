@@ -3,3 +3,5 @@ wiki-*
 *.swp
 *.o
 Makefile
+vendor/peg-0.1.4/leg
+vendor/peg-0.1.4/peg
