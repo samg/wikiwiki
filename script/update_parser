@@ -1,5 +1,6 @@
 #!/bin/bash
 git submodule update --init
+(cd vendor/YAPWTP && git checkout master)
 (cd vendor/peg-0.1.4 && make)
 (export PATH="../peg-0.1.4:$PATH"; cd vendor/YAPWTP && make)
 git submodule status > vendor/yapwtp-version.txt
