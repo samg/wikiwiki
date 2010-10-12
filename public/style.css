@@ -12,6 +12,7 @@ h1{color:#226}
 
 #header a{font-size: 11px; color:#333}
 #header{padding:1em 0}
+.editsection{display:none}
 
 
 .diff{overflow:auto;}
