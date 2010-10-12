@@ -1,0 +1,3 @@
+[submodule "vendor/YAPWTP"]
+	path = vendor/YAPWTP
+	url = git://github.com/thomasluce/YAPWTP.git
