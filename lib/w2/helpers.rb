@@ -46,7 +46,7 @@ module W2
     end
 
     def parse_wiki_text(text)
-      Open3.popen3(File.dirname(__FILE__) + '/../../ext/yapwtp/parser') do |i,o,e|
+      Open3.popen3(File.dirname(__FILE__) + '/../../vendor/YAPWTP/bin/parser') do |i,o,e|
         i.write text
         i.close
         [o.read, e.read].join("\n")
