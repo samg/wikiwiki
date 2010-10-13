@@ -61,9 +61,18 @@ describe "WikiWiki" do
         helper.save_file('/save/a/file', "text")
         File.readlines(helper.wiki_db_root + '.recent_changes').
           size.should == 1
-        helper.save_file('/save/a/file', "text")
+        helper.save_file('/save/a/file', "different text")
         File.readlines(helper.wiki_db_root + '.recent_changes').
           size.should == 2
+      end
+
+      it "should not save the same version of a page over an over" do
+        text = "Some\n==Awesome==\n [[WikiText]]"
+        helper.save_file('/save/a/file', text)
+        helper.save_file('/save/a/file', text)
+        helper.save_file('/save/a/file', text)
+        File.readlines(helper.wiki_db_root + '.recent_changes').
+          size.should == 1
       end
     end
 

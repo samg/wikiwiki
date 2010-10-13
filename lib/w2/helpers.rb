@@ -81,15 +81,19 @@ module W2
       file_path = file_path( uri_path )
       File.open( file_path, 'w' ) { |f| f.write wiki_text }
 
-      # save revsion in history folder
-      rev_path = revision_file_path(uri_path)
-      FileUtils.mkdir_p(File.dirname(rev_path))
-      system('cp', file_path, rev_path)
+      # don't record history if the text hasn't changed
+      last_rev = changes(uri_path).first
+      if !last_rev or File.read(last_rev) != wiki_text
+        # save revision in history folder
+        rev_path = revision_file_path(uri_path)
+        FileUtils.mkdir_p(File.dirname(rev_path))
+        system('cp', file_path, rev_path)
 
-      # update recent changes
-      File.open( File.expand_path(
-          File.join(wiki_db_root, '.recent_changes')), 'a') do |f|
-        f.puts rev_path
+        # update recent changes
+        File.open( File.expand_path(
+            File.join(wiki_db_root, '.recent_changes')), 'a') do |f|
+          f.puts rev_path
+        end
       end
     end
 
