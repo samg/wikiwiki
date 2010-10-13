@@ -2,7 +2,6 @@
 module W2
   module Helpers
     include Rack::Utils
-    include WillPaginate::ViewHelpers
     def changes(path)
       Dir[changes_glob(path)].sort.reverse
     end

@@ -9,5 +9,5 @@
         = Time.at(time.to_i).strftime("%B %d at %I:%M %p")
       %dd= diff(change)
 
-= will_paginate changes
-
+.next
+  %a{:href => "?page=#{(params[:page] || 1).to_i + 1}"} [more]
