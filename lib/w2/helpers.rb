@@ -1,12 +1,8 @@
-require 'open3'
-require 'haml'
-require 'fileutils'
-require 'dirb'
-require File.dirname(__FILE__) + '/../../vendor/YAPWTP/ffi/yapwtp'
 # WikiWiki
 module W2
   module Helpers
     include Rack::Utils
+    include WillPaginate::ViewHelpers
     def changes(path)
       Dir[changes_glob(path)].sort.reverse
     end

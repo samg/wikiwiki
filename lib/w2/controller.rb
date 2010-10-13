@@ -16,13 +16,13 @@ module W2
       haml :changes, :locals => {
         :path => 'Recent Changes',
         :changes => 
-          `tail -n 200 #{(File.join(wiki_db_root, '.recent_changes'))}`.
-            split.reverse
+          `cat #{(File.join(wiki_db_root, '.recent_changes'))}`.
+            split.reverse.paginate(:page => params[:page])
       }
     end
 
     get %r'(.*)/changes' do |path|
-      haml :changes, :locals => {:path => path, :changes => changes(path)}
+      haml :changes, :locals => {:path => path, :changes => changes(path).paginate(:page => params[:page])}
     end
 
     get %r'(.*)/(\d{10})' do |path, time|
