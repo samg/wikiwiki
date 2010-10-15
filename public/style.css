@@ -13,6 +13,8 @@ h1{color:#226}
 #header a{font-size: 11px; color:#333}
 #header{padding:1em 0}
 .editsection{display:none}
+td, th, table{border:solid 1px #ccc;border-collapse:collapse;}
+th{font-weight:bold;}
 
 
 .diff{overflow:auto;}
