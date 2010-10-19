@@ -189,7 +189,7 @@ $(document).ready(function(){
 
 /* simplest dbl click to edit ever */
 $(document).ready(function(){
-  $('#content').dblclick(function(){
+  $('#text').dblclick(function(){
     window.location.href = window.location.href + '/edit';
   });
 });
