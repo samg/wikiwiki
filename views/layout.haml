@@ -31,4 +31,7 @@
     #content
       = yield
     #footer
+  - analytics_partial = File.join(File.dirname(__FILE__), '_analytics.html')
+  - if File.exist?(analytics_partial)
+    = File.read analytics_partial
 
