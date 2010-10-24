@@ -44,6 +44,17 @@ module W2
     def parse_wiki_text(text)
       parser = WikiParser.new
       parser.html_from_string(text)
+      wikitext_with_templates_for parser.parsed_text, parser.templates
+    end
+
+    def wikitext_with_templates_for wikitext, templates
+      templates.each do |template|
+        template_text = parsed_wiki_text_for(File.join('/', template[:name]))
+        if template_text
+          wikitext.gsub! /#{template[:replace_tag]}/, template_text
+        end
+      end
+      wikitext
     end
 
     def wiki_db_root
