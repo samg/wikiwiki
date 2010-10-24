@@ -29,3 +29,4 @@ th{font-weight:bold;}
 .toc ol { counter-reset: toc }
 .toc li { display: block }
 .toc li:before { content: counters(toc, ".") ". "; counter-increment: toc }
+.toc a { color: blue }
