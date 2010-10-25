@@ -15,13 +15,23 @@ module W2
     # FILE UPLOAD HELPERS
     ###########################
     def upload_file(tmpfile, filename)
-      raise IOError, "Invalid file upload" unless valid_file_upload(tmpfile)
+      ensure_valid_file_upload(tmpfile, filename)
       write_uploaded_file(tmpfile, filename)
     end
 
-    def valid_file_upload file
-      true
+    def ensure_valid_file_upload tmpfile, filename
+	  raise IOError, "File already exists." if File.exist?(filename) 
+	  raise IOError, "Invalid file type." if !valid_file_type(tmpfile.path)
     end
+
+	def valid_file_type filename
+	  # Relies on the system's file(1) command which looks at the content
+      !`file #{filename}`.scan(/(#{valid_file_types.join('|')})/i).empty?
+	end
+
+	def valid_file_types
+      %w{ jpeg gif png jpg }
+	end
 
     def write_uploaded_file tmpfile, filename
       File.open(File.join(filestore, path_to_safe_filename(filename)), 'wb') do |file|
@@ -32,7 +42,7 @@ module W2
     end
 
     def filestore
-      "files"
+      File.join(wiki_db_root, "File")
     end
 
     # FILE SYSTEM HELPERS
@@ -44,7 +54,7 @@ module W2
     # is a single character wildcard in bash.
     def path_to_safe_filename(path)
       path = '/' if path == ''
-      normalize_path(path).gsub('/', '?').gsub(' ', '_')
+      normalize_path(path).gsub('/', '?').gsub(/[ :]/, '_')
     end
 
     def safe_filename_to_path(path)

@@ -32,19 +32,37 @@ module W2
     post '/upload' do 
       unless params[:file] &&
            (tmpfile = params[:file][:tempfile]) &&
-           (src_name = params[:file][:filename])
+           (name = params[:file][:filename])
         return haml :upload, :locals => {:title => 'File Upload', :err => "No file selected" }
       end
 
       filename = params[:filename].empty? ? name : params[:filename]
       STDERR.puts "#{Time.now}: Uploading file, original name #{name.inspect}"
 
-      file_upload(tmpfile, filename)
+      begin
+        upload_file(tmpfile, filename)
+	  rescue IOError, Errno::ENOENT => e
+        return haml :upload, :locals => {:title => 'File Upload', :err => h(e.inspect) }
+	  ensure
+	     tmpfile.close
+		 FileUtils.rm tmpfile.path
+	  end
+
+	  # TODO: redirect to image page
     end
 
     get %r'(.*)/(\d{10})' do |path, time|
       haml :diff, :locals => {:path => path, :time => time, :changes => changes(path)}
     end
+
+	get %r'(File|Image):(.*)' do |junk, path|
+	  path = File.join(filestore, safe_filename_to_path(path))
+      unless File.exist? path
+        status 404
+		return "404 Not Found"
+	  end
+	  send_file(path)
+	end
 
     get %r'(.*)' do |path|
       if File.exist? file_path(path)
