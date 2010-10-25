@@ -26,7 +26,16 @@ module W2
     end
 
     get %r'(File|Image):(.*)' do |junk, path|
-      haml :image, :locals => {:src => [ filestore_url, path ].join('/'), :name => path }
+	  real_path = File.join(filestore, path_to_safe_filename(path))
+	  if !File.exist? real_path
+	    status 404
+        return "404 Not Found"
+	  end
+      haml :image, :locals => { 
+	    :src => [ filestore_url, path ].join('/'), 
+		:name => path,
+		:mtime => File.open(real_path) { |f| f.mtime }
+      }
     end
 
     get '/upload' do 
