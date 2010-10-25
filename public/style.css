@@ -16,6 +16,7 @@ h1{color:#226}
 td, th, table{border:solid 1px #ccc;border-collapse:collapse;}
 th{font-weight:bold;}
 
+.error { color: red }
 
 .diff{overflow:auto;}
 .diff ul{background:#fff;overflow:auto;font-size:13px;list-style:none;margin:0;padding:0;display:table;width:100%;}

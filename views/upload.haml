@@ -1,0 +1,15 @@
+- if defined? err
+  %h2.error= err
+%form{ :method => 'post', :enctype => 'multipart/form-data' }
+  %table.upload
+    %tr
+      %th{ :align => 'right' } Save File As:
+      %td 
+        %input{ :type=> "text", :name=> "filename" }
+    %tr
+      %th{ :align => 'right' } From Local File:
+      %td
+        %input{ :type=> "file", :name=> "file" }
+    %tr
+      %th{ :align => 'right' }
+        %input{ :type => "submit", :value => "Upload" }

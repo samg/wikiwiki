@@ -25,6 +25,23 @@ module W2
       haml :changes, :locals => {:path => path, :changes => changes(path).paginate(:page => params[:page])}
     end
 
+    get '/upload' do 
+      haml :upload, :locals => {:title => 'File Upload'}
+    end
+
+    post '/upload' do 
+      unless params[:file] &&
+           (tmpfile = params[:file][:tempfile]) &&
+           (src_name = params[:file][:filename])
+        return haml :upload, :locals => {:title => 'File Upload', :err => "No file selected" }
+      end
+
+      filename = params[:filename].empty? ? name : params[:filename]
+      STDERR.puts "#{Time.now}: Uploading file, original name #{name.inspect}"
+
+      file_upload(tmpfile, filename)
+    end
+
     get %r'(.*)/(\d{10})' do |path, time|
       haml :diff, :locals => {:path => path, :time => time, :changes => changes(path)}
     end

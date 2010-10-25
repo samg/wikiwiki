@@ -12,6 +12,29 @@ module W2
 
     alias_method :h, :escape_html
 
+    # FILE UPLOAD HELPERS
+    ###########################
+    def upload_file(tmpfile, filename)
+      raise IOError, "Invalid file upload" unless valid_file_upload(tmpfile)
+      write_uploaded_file(tmpfile, filename)
+    end
+
+    def valid_file_upload file
+      true
+    end
+
+    def write_uploaded_file tmpfile, filename
+      File.open(File.join(filestore, path_to_safe_filename(filename)), 'wb') do |file|
+        while blk = tmpfile.read(65536)
+          file.write blk
+        end
+      end
+    end
+
+    def filestore
+      "files"
+    end
+
     # FILE SYSTEM HELPERS
     ###########################
 
