@@ -25,9 +25,9 @@ module W2
       haml :changes, :locals => {:path => path, :changes => changes(path).paginate(:page => params[:page])}
     end
 
-	get %r'(File|Image):(.*)' do |junk, path|
+    get %r'(File|Image):(.*)' do |junk, path|
       haml :image, :locals => {:src => [ filestore_url, path ].join('/'), :name => path }
-	end
+    end
 
     get '/upload' do 
       haml :upload, :locals => {:title => 'File Upload'}
@@ -45,25 +45,25 @@ module W2
 
       begin
         upload_file(tmpfile, filename)
-	  rescue IOError, Errno::ENOENT => e
-        return haml :upload, :locals => {:title => 'File Upload', :err => h(e.inspect) }
-	  ensure
-	     tmpfile.close
-		 FileUtils.rm tmpfile.path
-	  end
+      rescue IOError, Errno::ENOENT => e
+        return haml :upload, :locals => {:title => 'File Upload', :err => h(e.to_s) }
+      ensure
+         tmpfile.close
+         FileUtils.rm tmpfile.path
+      end
 
       redirect "/Image:#{filename}"
     end
 
     # TODO: Can't figure out how to call a helper in the route definition!
-	get %r'/files/(.*)' do |path|
-	  path = File.expand_path(File.join(filestore, safe_filename_to_path(path)))
+    get %r'/files/(.*)' do |path|
+      path = File.expand_path(File.join(filestore, safe_filename_to_path(path)))
       unless File.exist? path
         status 404
-		return "404 Not Found"
-	  end
-	  send_file(path)
-	end
+        return "404 Not Found"
+      end
+      send_file(path)
+    end
 
     get %r'(.*)/(\d{10})' do |path, time|
       haml :diff, :locals => {:path => path, :time => time, :changes => changes(path)}
