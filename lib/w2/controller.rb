@@ -58,7 +58,6 @@ module W2
     # TODO: Can't figure out how to call a helper in the route definition!
 	get %r'/files/(.*)' do |path|
 	  path = File.expand_path(File.join(filestore, safe_filename_to_path(path)))
-	  STDERR.puts "--#{path}--"
       unless File.exist? path
         status 404
 		return "404 Not Found"
