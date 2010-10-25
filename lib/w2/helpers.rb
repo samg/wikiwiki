@@ -45,6 +45,10 @@ module W2
       File.join(wiki_db_root, "File")
     end
 
+	def filestore_url
+      "/files/"
+	end
+
     # FILE SYSTEM HELPERS
     ###########################
 
@@ -76,6 +80,7 @@ module W2
 
     def parse_wiki_text(text)
       parser = WikiParser.new
+	  parser.image_base_url = filestore_url
       parser.html_from_string(text)
       wikitext_with_templates_for parser.parsed_text, parser.templates
     end
