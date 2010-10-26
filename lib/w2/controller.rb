@@ -87,7 +87,7 @@ module W2
     end
 
     post %r'(.*)' do |path|
-      save_file path, params['wiki_text']
+      save_page path, params['wiki_text']
       redirect show_path(path)
     end
   end

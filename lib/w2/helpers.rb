@@ -118,7 +118,7 @@ module W2
       File.dirname(revision_file_path(uri_path))
     end
 
-    def save_file uri_path, wiki_text
+    def save_page uri_path, wiki_text
       # save current version
       FileUtils.mkdir_p( wiki_db_root )
       file_path = file_path( uri_path )

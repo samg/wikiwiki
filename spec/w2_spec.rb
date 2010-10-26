@@ -43,41 +43,41 @@ describe "WikiWiki" do
         File.exist?(helper.filestore).should be_true
       end
     end
-    describe "save_file" do
+    describe "save_page" do
       it "should save a file" do
         lambda do
-          helper.save_file('/save/a/file', 'some text')
+          helper.save_page('/save/a/file', 'some text')
         end.should change{File.exist? helper.file_path('/save/a/file') }.
           from(false).to true
       end
 
       it "should save the text" do
         text = "Some\n==Awesome==\n [[WikiText]]"
-        helper.save_file('/save/a/file', text)
+        helper.save_page('/save/a/file', text)
         File.read(helper.file_path('/save/a/file')).should == text
       end
 
       it "should save revisions" do
         text = "Some\n==Awesome==\n [[WikiText]]"
-        helper.save_file('/save/a/file', text)
+        helper.save_page('/save/a/file', text)
         Dir.new(helper.revision_directory('/save/a/file')).
           should have(3).entries # ., .., revisionfile
       end
 
       it "should save the revision to recent_changes" do
-        helper.save_file('/save/a/file', "text")
+        helper.save_page('/save/a/file', "text")
         File.readlines(helper.wiki_db_root + '.recent_changes').
           size.should == 1
-        helper.save_file('/save/a/file', "different text")
+        helper.save_page('/save/a/file', "different text")
         File.readlines(helper.wiki_db_root + '.recent_changes').
           size.should == 2
       end
 
       it "should not save the same version of a page over an over" do
         text = "Some\n==Awesome==\n [[WikiText]]"
-        helper.save_file('/save/a/file', text)
-        helper.save_file('/save/a/file', text)
-        helper.save_file('/save/a/file', text)
+        helper.save_page('/save/a/file', text)
+        helper.save_page('/save/a/file', text)
+        helper.save_page('/save/a/file', text)
         File.readlines(helper.wiki_db_root + '.recent_changes').
           size.should == 1
       end
