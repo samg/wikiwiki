@@ -22,11 +22,15 @@ module W2
     def ensure_valid_file_upload tmpfile, filename
       raise IOError, "File already exists." if File.exist?(filename)
       raise IOError, "Invalid file type." if !valid_file_type(tmpfile.path)
+      true
     end
 
+    # Relies on the system's file(1) command which looks at the content
     def valid_file_type filename
-      # Relies on the system's file(1) command which looks at the content
-      !`file #{filename}`.scan(/(#{valid_file_types.join('|')})/i).empty?
+      # avoid hacks that break out of single quotes echoed to shell
+      filename.gsub!("'", '')
+      `file --brief --mime-type '#{filename}'`.
+        downcase =~ Regexp.union(valid_file_types)
     end
 
     def valid_file_types

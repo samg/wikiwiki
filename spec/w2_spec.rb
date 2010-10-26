@@ -37,10 +37,29 @@ describe "WikiWiki" do
       @helper
     end
 
-    describe "write_uploaded_file" do
-      it "should make the filestore dir" do
-        helper.write_uploaded_file(StringIO.new("foobar"), 'foobar.jpg')
-        File.exist?(helper.filestore).should be_true
+    describe "file upload stuff" do
+      describe "ensure_valid_file_upload" do
+        def fixture(basename)
+          File.open(File.join(File.dirname(__FILE__), 'fixtures', basename))
+        end
+
+        it "should think CrazyMonkey.jpg is a valid file" do
+          helper.ensure_valid_file_upload(fixture("CrazyMonkey.jpg"), "CM").
+            should be_true
+        end
+
+        it "should not thing notAnImage.jpg is a valid file" do
+          lambda do
+            helper.ensure_valid_file_upload(fixture("notAnImage.jpg"), "CM")
+          end.should raise_error(IOError)
+        end
+      end
+
+      describe "write_uploaded_file" do
+        it "should make the filestore dir" do
+          helper.write_uploaded_file(StringIO.new("foobar"), 'foobar.jpg')
+          File.exist?(helper.filestore).should be_true
+        end
       end
     end
     describe "save_page" do
