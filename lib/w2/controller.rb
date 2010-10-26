@@ -15,7 +15,7 @@ module W2
     get %r'/recent_changes' do
       haml :changes, :locals => {
         :path => 'Recent Changes',
-        :changes => 
+        :changes =>
           `cat #{(File.join(wiki_db_root, '.recent_changes'))}`.
             split.reverse.paginate(:page => params[:page])
       }
@@ -26,23 +26,23 @@ module W2
     end
 
     get %r'(File|Image):(.*)' do |junk, path|
-	  real_path = File.join(filestore, path_to_safe_filename(path))
-	  if !File.exist? real_path
-	    status 404
+    real_path = File.join(filestore, path_to_safe_filename(path))
+    if !File.exist? real_path
+      status 404
         return "404 Not Found"
-	  end
-      haml :image, :locals => { 
-	    :src => [ filestore_url, path ].join('/'), 
-		:name => path,
-		:mtime => File.open(real_path) { |f| f.mtime }
+    end
+      haml :image, :locals => {
+      :src => [ filestore_url, path ].join('/'),
+    :name => path,
+    :mtime => File.open(real_path) { |f| f.mtime }
       }
     end
 
-    get '/upload' do 
+    get '/upload' do
       haml :upload, :locals => {:title => 'File Upload'}
     end
 
-    post '/upload' do 
+    post '/upload' do
       unless params[:file] &&
            (tmpfile = params[:file][:tempfile]) &&
            (name = params[:file][:filename])
@@ -81,7 +81,7 @@ module W2
     get %r'(.*)' do |path|
       if File.exist? file_path(path)
         haml :show, :locals => {:path => path, :text => parsed_wiki_text_for(path)}
-      else 
+      else
         haml :edit, :locals => {:path => path, :text => wiki_text_for(path)}
       end
     end

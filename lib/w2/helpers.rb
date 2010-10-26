@@ -20,7 +20,7 @@ module W2
     end
 
     def ensure_valid_file_upload tmpfile, filename
-      raise IOError, "File already exists." if File.exist?(filename) 
+      raise IOError, "File already exists." if File.exist?(filename)
       raise IOError, "Invalid file type." if !valid_file_type(tmpfile.path)
     end
 
@@ -154,7 +154,7 @@ module W2
       previous_fn = changes[current_index + 1]
       if previous_fn
         previous = File.read(previous_fn)
-      else 
+      else
         previous = ''
       end
       Dirb::Diff.new(previous, current).to_s(:html)
