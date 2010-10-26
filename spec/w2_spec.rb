@@ -36,6 +36,13 @@ describe "WikiWiki" do
     def helper
       @helper
     end
+
+    describe "write_uploaded_file" do
+      it "should make the filestore dir" do
+        helper.write_uploaded_file(StringIO.new("foobar"), 'foobar.jpg')
+        File.exist?(helper.filestore).should be_true
+      end
+    end
     describe "save_file" do
       it "should save a file" do
         lambda do
