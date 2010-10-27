@@ -29,8 +29,7 @@ module W2
     def valid_file_type filename
       # avoid hacks that break out of single quotes echoed to shell
       filename.gsub!("'", '')
-      `file --brief --mime-type '#{filename}'`.
-        downcase =~ Regexp.union(valid_file_types)
+      `file '#{filename}'`.split(':').last.downcase =~ Regexp.union(*valid_file_types)
     end
 
     def valid_file_types
