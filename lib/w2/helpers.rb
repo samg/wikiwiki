@@ -91,7 +91,7 @@ module W2
     end
 
     def wikitext_with_templates_for wikitext, templates
-      templates.reduce(wikitext) do |memo, template|
+      templates.inject(wikitext) do |memo, template|
         template_text = parsed_wiki_text_for(File.join('/', template[:name]))
         memo = memo.gsub /#{template[:replace_tag]}/, template_text if template_text
         memo
