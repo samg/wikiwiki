@@ -193,3 +193,10 @@ $(document).ready(function(){
     window.location.href = window.location.href + '/edit';
   });
 });
+
+/* Auto-set the upload filename on update to the file picker */
+$(document).ready(function(){
+  $('#upload-file').change(function(evt){
+    $('#upload-filename').val(evt.target.value);
+  });
+});
