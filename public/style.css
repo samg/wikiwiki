@@ -34,6 +34,8 @@ th{font-weight:bold;}
 
 .thumbimage {
     max-width: 500px;
+	max-height: 220px;
 	/* Resize the image for IE6 */
     width: expression(this.width > 500 ? 500: true);
+    height: expression(this.height > 220 ? 220: true);
 }
