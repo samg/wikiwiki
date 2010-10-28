@@ -31,3 +31,9 @@ th{font-weight:bold;}
 .toc li { display: block }
 .toc li:before { content: counters(toc, ".") ". "; counter-increment: toc }
 .toc a { color: blue }
+
+.thumbimage {
+    max-width: 500px;
+	/* Resize the image for IE6 */
+    width: expression(this.width > 500 ? 500: true);
+}
