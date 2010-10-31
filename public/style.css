@@ -32,6 +32,24 @@ th{font-weight:bold;}
 .toc li:before { content: counters(toc, ".") ". "; counter-increment: toc }
 .toc a { color: blue }
 
+#upload-form {
+  width: 500px;
+  border: 1px solid #ccc;
+}
+
+#upload-form dt {
+  float: left; 
+  padding-right: 1em;
+  padding-top: 3px;
+  width: 150px;
+  text-align: right;
+  font-weight: bold;
+}
+
+#upload-form dd {
+  padding-top: 3px;
+}
+
 .thumbimage {
     max-width: 500px;
 	max-height: 220px;
