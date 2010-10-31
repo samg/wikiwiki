@@ -1,17 +1,17 @@
 - if defined? err
   %h2.error= err
 %p
-  Pick a file to upload from your local system.  
+  Pick a file to upload from your local system.
 %form.upload{ :method => 'post', :enctype => 'multipart/form-data' }
   %dl.upload{ :id => 'upload-form' }
-    %dt 
+    %dt
       From Local File:
-    %dd 
+    %dd
       %input{ :id => "upload-file", :type=> "file", :name=> "file" }
-    %dt 
+    %dt
       Save File As:
-    %dd 
+    %dd
       %input{ :id => "upload-filename", :type => "text", :name=> "filename" }
-    %dt 
+    %dt
       %input{ :type => "submit", :value => "Upload" }
     %dd
