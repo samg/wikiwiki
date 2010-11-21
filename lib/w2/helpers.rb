@@ -161,6 +161,7 @@ module W2
       else
         previous = ''
       end
+      previous, current = previous.gsub(/\r?\n/, "\n").chomp + "\n", current.gsub(/\r?\n/, "\n").chomp + "\n"
       Dirb::Diff.new(previous, current).to_s(:html)
     end
 
