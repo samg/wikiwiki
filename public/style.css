@@ -23,7 +23,7 @@ th{font-weight:bold;}
 .diff del, .diff ins{display:block;text-decoration:none;}
 .diff li{padding:0; display:table-row;margin: 0;}
 .diff del, .diff ins, .diff span{white-space:pre-wrap;font-family:courier;}
-.diff li.ins{background:#9f9;}
+.diff li.ins{background:#cfc;}
 .diff li.del{background:#fcc;}
 .diff li.ins strong{font-weight:normal; background: #6f6 }
 .diff li.del strong{font-weight:normal; background: #f99 }
@@ -52,9 +52,9 @@ th{font-weight:bold;}
 }
 
 .thumbimage {
-    max-width: 500px;
-	max-height: 220px;
-	/* Resize the image for IE6 */
-    width: expression(this.width > 500 ? 500: true);
-    height: expression(this.height > 220 ? 220: true);
+  max-width: 500px;
+  max-height: 220px;
+  /* Resize the image for IE6 */
+  width: expression(this.width > 500 ? 500: true);
+  height: expression(this.height > 220 ? 220: true);
 }
