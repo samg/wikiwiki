@@ -162,7 +162,7 @@ module W2
         previous = ''
       end
       previous, current = previous.chomp + "\r\n", current.chomp + "\r\n"
-      Dirb::Diff.new(previous, current).to_s(:html)
+      Diffy::Diff.new(previous, current).to_s(:html)
     end
 
 
